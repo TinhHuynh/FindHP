@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">FindHP</string>
+
+    <!-- Map activity -->
     <string name="title_activity_maps">FindHP</string>
+    <string name="title_permission_not_granted">Location permission is not granted</string>
+    <string name="msg_permission_not_granted">Please grant location permission for getting the best places around you!</string>
+    <string name="msg_can_not_listen_update_changes">Can not listen to your location\'s changes.</string>
+
 </resources>

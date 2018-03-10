@@ -3,19 +3,18 @@ package com.huynhtinh.android.findhp.data;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.huynhtinh.android.findhp.data.Location;
 
 public class Geometry {
 
     @SerializedName("location")
     @Expose
-    private Location location;
+    private HPLocation location;
 
-    public Location getLocation() {
+    public HPLocation getLocation() {
         return location;
     }
 
-    public void setLocation(Location location) {
+    public void setLocation(HPLocation location) {
         this.location = location;
     }
 

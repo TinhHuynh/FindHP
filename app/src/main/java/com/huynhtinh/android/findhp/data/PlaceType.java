@@ -5,5 +5,24 @@ package com.huynhtinh.android.findhp.data;
  */
 
 public enum PlaceType {
-    DENTIST, DOCTOR, GYM, HOSPITAL, PHARMARCY, SPA
+    DENTIST, DOCTOR, GYM, HOSPITAL, PHARMARCY, SPA;
+
+    @Override
+    public String toString() {
+        switch (this) {
+            case DENTIST:
+                return "gym";
+            case DOCTOR:
+                return "doctor";
+            case GYM:
+                return "gym";
+            case HOSPITAL:
+                return "hospital";
+            case PHARMARCY:
+                return "pharmacy";
+            case SPA:
+                return "spa";
+        }
+        return super.toString();
+    }
 }

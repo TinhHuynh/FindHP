@@ -1,11 +1,12 @@
 
 package com.huynhtinh.android.findhp.data.network.map;
 
-import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.huynhtinh.android.findhp.data.Geometry;
 import com.huynhtinh.android.findhp.data.Photo;
+
+import java.util.List;
 
 public class Place {
 
@@ -26,7 +27,7 @@ public class Place {
     private String placeId;
     @SerializedName("rating")
     @Expose
-    private Integer rating;
+    private Float rating = 0f;
     @SerializedName("reference")
     @Expose
     private String reference;
@@ -74,11 +75,11 @@ public class Place {
         this.placeId = placeId;
     }
 
-    public Integer getRating() {
+    public Float getRating() {
         return rating;
     }
 
-    public void setRating(Integer rating) {
+    public void setRating(Float rating) {
         this.rating = rating;
     }
 
