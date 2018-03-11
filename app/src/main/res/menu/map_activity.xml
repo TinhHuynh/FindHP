@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_find_dentist"
+        android:title="@string/title_find_dentist"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/item_find_doctor"
+        android:title="@string/title_find_doctor"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/item_find_gym"
+        android:title="@string/title_find_gym"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/item_find_hospital"
+        android:title="@string/title_find_hospital"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/item_find_pharmacy"
+        android:title="@string/title_find_pharmacy"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/item_find_spa"
+        android:title="@string/title_find_spa"
+        app:showAsAction="never"/>
+
+</menu>

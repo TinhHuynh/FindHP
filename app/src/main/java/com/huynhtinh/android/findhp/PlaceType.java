@@ -1,4 +1,4 @@
-package com.huynhtinh.android.findhp.data;
+package com.huynhtinh.android.findhp;
 
 /**
  * Created by TINH HUYNH on 3/7/2018.
@@ -11,7 +11,7 @@ public enum PlaceType {
     public String toString() {
         switch (this) {
             case DENTIST:
-                return "gym";
+                return "dentist";
             case DOCTOR:
                 return "doctor";
             case GYM:

@@ -3,6 +3,7 @@ package com.huynhtinh.android.findhp.util;
 import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.huynhtinh.android.findhp.data.HPLocation;
 
 /**
  * Created by TINH HUYNH on 3/10/2018.
@@ -15,6 +16,14 @@ public class LatLngLocationConverter {
             return new LatLng(0, 0);
         double lat = location.getLatitude();
         double lng = location.getLongitude();
+        return new LatLng(lat, lng);
+    }
+
+    public static LatLng convertHPLocationToLatLng(HPLocation location) {
+        if (location == null)
+            return new LatLng(0, 0);
+        double lat = location.getLat();
+        double lng = location.getLng();
         return new LatLng(lat, lng);
     }
 

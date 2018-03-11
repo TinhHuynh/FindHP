@@ -10,9 +10,14 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -31,56 +36,74 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.huynhtinh.android.findhp.PlaceType;
 import com.huynhtinh.android.findhp.R;
 import com.huynhtinh.android.findhp.data.HPLocation;
-import com.huynhtinh.android.findhp.data.PlaceType;
+import com.huynhtinh.android.findhp.data.SearchType;
 import com.huynhtinh.android.findhp.data.network.api.GMapsClient;
 import com.huynhtinh.android.findhp.data.network.api.GoogleMapService;
 import com.huynhtinh.android.findhp.data.network.map.MarkerPlaceHolder;
 import com.huynhtinh.android.findhp.data.network.map.Place;
 import com.huynhtinh.android.findhp.data.network.map.PlacesResponse;
+import com.huynhtinh.android.findhp.route.AbstractRouting;
+import com.huynhtinh.android.findhp.route.Route;
+import com.huynhtinh.android.findhp.route.RouteException;
+import com.huynhtinh.android.findhp.route.Routing;
+import com.huynhtinh.android.findhp.route.RoutingListener;
 import com.huynhtinh.android.findhp.util.LatLngLocationConverter;
 import com.huynhtinh.android.findhp.util.LocationUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, OnSuccessListener<Location>,
-        GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnMarkerClickListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, OnSuccessListener<Location>,
+        GoogleMap.OnMarkerClickListener, RoutingListener, GoogleMap.OnMarkerDragListener, View.OnClickListener {
 
     private static final int LOCATION_PERMISSION_RC = 101;
     private static final long INTERVAL = 1000 * 10;
     private static final long FASTEST_INTERVAL = 5 * 1000;
     private static final int REQUEST_CHECK_SETTINGS = 102;
     private static final int MIN_DISTANCE_TO_UPDATE_LOCATION = 100; // meter
-    private static final int DEFAULT_ZOOM_LEVEL = 13;
+    private static final int DEFAULT_ZOOM_LEVEL = 12;
     private static final int DEFAULT_RADIUS = 5000;
-
+    private static final int DEFAULT_ZOOM_BOUND_PADDING = 0;
+    private static final float DEFAULT_POLYLINE_WIDTH = 7;
+    @BindView(R.id.fab_current_location)
+    FloatingActionButton mFabCurrentLocation;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
     private LatLng mCurrentLccation;
+    private LatLng mTargetLocation;
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
     private LocationCallback mLocationCallback;
     private String mCurrentAddresss;
     private Marker mTargetMarker;
     private GoogleMapService mGoogleMapService = GMapsClient.getClient();
-
+    private SearchType mCurrentSearchType = SearchType.CURRENT_LOCATION;
+    private PlaceType mCurrentPlaceType = PlaceType.HOSPITAL;
     private List<MarkerPlaceHolder> mMarkerPlaceHolders;
+    private List<Polyline> mPolylines;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        ButterKnife.bind(this);
 
         grantLocationPermissionsIfNeeded();
 
@@ -88,6 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        mFabCurrentLocation.setOnClickListener(this);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         getLastKnownLocation();
@@ -109,14 +133,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-
-        mMap.setMyLocationEnabled(true);
-        mMap.setOnMyLocationButtonClickListener(this);
-        mMap.setOnMarkerClickListener(this);
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.map_activity, menu);
+        return super.onCreateOptionsMenu(menu);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.item_find_dentist:
+                checkPlaceTypeAndFetchPlaces(PlaceType.DENTIST);
+                break;
+            case R.id.item_find_doctor:
+                checkPlaceTypeAndFetchPlaces(PlaceType.DOCTOR);
+                break;
+            case R.id.item_find_gym:
+                checkPlaceTypeAndFetchPlaces(PlaceType.GYM);
+                break;
+            case R.id.item_find_hospital:
+                checkPlaceTypeAndFetchPlaces(PlaceType.HOSPITAL);
+                break;
+            case R.id.item_find_pharmacy:
+                checkPlaceTypeAndFetchPlaces(PlaceType.PHARMARCY);
+                break;
+            case R.id.item_find_spa:
+                checkPlaceTypeAndFetchPlaces(PlaceType.SPA);
+                break;
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setOnMarkerClickListener(this);
+        mMap.setOnMarkerDragListener(this);
+        mMap.getUiSettings().setCompassEnabled(false);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -135,20 +192,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onSuccess(Location location) {
         if (location != null) {
-            onLocationUpdated(location);
+            updateCurrentLocationAndFetchPlaces(location);
         }
     }
 
     @Override
-    public boolean onMyLocationButtonClick() {
-        showShortToast(mCurrentAddresss);
-        return false;
+    public boolean onMarkerClick(Marker marker) {
+        if (!marker.equals(mTargetMarker) && !mMarkerPlaceHolders.isEmpty()) {
+            for (MarkerPlaceHolder holder : mMarkerPlaceHolders) {
+                if (holder.getMarker().equals(marker)) {
+                    updatePlaceBoundUI(holder);
+                    break;
+                }
+            }
+        }
+        return true;
     }
 
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        return false;
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -168,20 +228,118 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void onLocationUpdated(Location location) {
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+        if (mTargetMarker.equals(marker)) {
+            Location location = LatLngLocationConverter.convertLatLngToLocation(marker.getPosition());
+            if (checkLocationisFarEnoughFromLastLocaton(location)) {
+                if (mCurrentSearchType == SearchType.CURRENT_LOCATION) {
+                    stopLocationUpdates();
+                }
+                mCurrentSearchType = SearchType.DRAG_LOCATION;
+                mLastLocation = location;
+                mTargetLocation = marker.getPosition();
+                refreshPlaceMarkerHolders();
+                refreshPolylines();
+                fetchPlaces();
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.fab_current_location:
+                if (mCurrentSearchType != SearchType.CURRENT_LOCATION) {
+                    mCurrentSearchType = SearchType.CURRENT_LOCATION;
+                    startLocationUpdates();
+                }
+                break;
+        }
+    }
+
+    private void checkPlaceTypeAndFetchPlaces(PlaceType placeType) {
+        if (mCurrentPlaceType != placeType) {
+            mCurrentPlaceType = placeType;
+            refreshPolylines();
+            refreshPlaceMarkerHolders();
+            fetchPlaces();
+        }
+    }
+
+    private void updatePlaceBoundUI(MarkerPlaceHolder holder) {
+        Marker destMarker = holder.getMarker();
+        Place place = holder.getPlace();
+        moveZoomCameraBound(destMarker);
+        customizePlaceMarker(destMarker, place);
+
+        LatLng placeLatLng = LatLngLocationConverter
+                .convertHPLocationToLatLng(place.getGeometry()
+                        .getLocation());
+
+        fetchDirectionTo(placeLatLng);
+    }
+
+    private void moveZoomCameraBound(Marker marker) {
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(mTargetLocation);
+        builder.include(marker.getPosition());
+        LatLngBounds bounds = builder.build();
+
+        //padding
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindow().getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
+        int padding = (int) (displayMetrics.widthPixels * 0.2);
+
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        mMap.animateCamera(cu);
+    }
+
+    private void moveZoomCameraBound(List<Marker> markers) {
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(mTargetLocation);
+        for (Marker marker : markers) {
+            builder.include(marker.getPosition());
+        }
+        LatLngBounds bounds = builder.build();
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, DEFAULT_ZOOM_BOUND_PADDING);
+        mMap.animateCamera(cu);
+    }
+
+    private void customizePlaceMarker(Marker marker, Place place) {
+        marker.setTitle(place.getName());
+        marker.setSnippet(place.getVicinity());
+        marker.showInfoWindow();
+    }
+
+    private void fetchDirectionTo(LatLng destLatLng) {
+        Routing routing = new Routing.Builder()
+                .travelMode(AbstractRouting.TravelMode.DRIVING)
+                .withListener(this)
+                .alternativeRoutes(false)
+                .waypoints(mTargetLocation, destLatLng)
+                .build();
+        routing.execute();
+    }
+
+    private void updateCurrentLocationAndFetchPlaces(Location location) {
         updateRelatedCurrentLocationData(location);
         showShortToast(mCurrentAddresss);
         moveCamera(mCurrentLccation, DEFAULT_ZOOM_LEVEL);
         updateTargetMarker(mCurrentLccation);
-        fetchPlaces(PlaceType.HOSPITAL);
+        mTargetLocation = mCurrentLccation;
+        mLastLocation = location;
+
+        refreshPlaceMarkerHolders();
+        refreshPolylines();
+        fetchPlaces();
     }
 
-    private void fetchPlaces(PlaceType placeType) {
-        String location = LocationUtils.parseParameterString(mCurrentLccation);
+    private void fetchPlaces() {
+        String location = LocationUtils.parseParameterString(mTargetLocation);
 
         Call<PlacesResponse> placesResponseCall = mGoogleMapService.fetchPlaces(
-                location, DEFAULT_RADIUS, placeType.toString());
-        placesResponseCall.request().url();
+                location, DEFAULT_RADIUS, mCurrentPlaceType.toString());
         onFetchPlacesCall(placesResponseCall);
     }
 
@@ -200,17 +358,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void handlePlacesList(List<Place> places) {
-        if (mMarkerPlaceHolders == null) {
-            mMarkerPlaceHolders = new ArrayList<>();
-        } else {
-            mMarkerPlaceHolders.clear();
-        }
+        refreshPlaceMarkerHolders();
+        List<Marker> markers = new ArrayList<>();
         for (Place place : places) {
             Marker placeMarker = addPlaceMarker(place.getGeometry().getLocation());
             MarkerPlaceHolder holder = new MarkerPlaceHolder(placeMarker, place);
             mMarkerPlaceHolders.add(holder);
+            markers.add(placeMarker);
         }
+        moveZoomCameraBound(markers);
     }
+
 
     private Marker addPlaceMarker(HPLocation location) {
         MarkerOptions options = new MarkerOptions();
@@ -226,6 +384,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         MarkerOptions options = new MarkerOptions();
         options.position(latLng)
+                .draggable(true)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
         mTargetMarker = mMap.addMarker(options);
 
@@ -245,10 +404,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (locationResult == null) {
                     return;
                 }
-
-                Location lastLocation = locationResult.getLastLocation();
-                if (needUpdateCurrentLocation(lastLocation)) {
-                    onLocationUpdated(lastLocation);
+                if (mCurrentSearchType == SearchType.CURRENT_LOCATION) {
+                    Location location = locationResult.getLastLocation();
+                    if (checkLocationisFarEnoughFromLastLocaton(location)) {
+                        updateCurrentLocationAndFetchPlaces(location);
+                    }
                 }
             }
         };
@@ -256,13 +416,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void updateRelatedCurrentLocationData(Location location) {
         mCurrentLccation = LatLngLocationConverter.convertLccationToLatLng(location);
-        mLastLocation = location;
         mCurrentAddresss = LocationUtils.
                 getFormattedAddressFromLocation(this,
                         location.getLatitude(), location.getLongitude());
     }
 
-    private boolean needUpdateCurrentLocation(Location location) {
+    private boolean checkLocationisFarEnoughFromLastLocaton(Location location) {
         return mLastLocation.distanceTo(location) >= MIN_DISTANCE_TO_UPDATE_LOCATION;
     }
 
@@ -377,5 +536,74 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void showLongToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
+
+    private void refreshPlaceMarkerHolders() {
+        if (mMarkerPlaceHolders == null) {
+            mMarkerPlaceHolders = new ArrayList<>();
+        } else {
+            if (!mMarkerPlaceHolders.isEmpty()) {
+                for (MarkerPlaceHolder holder : mMarkerPlaceHolders) {
+                    holder.getMarker().remove();
+                }
+            }
+            mMarkerPlaceHolders.clear();
+
+        }
+    }
+
+    private void refreshPolylines() {
+        if (mPolylines == null) {
+            mPolylines = new ArrayList<>();
+        } else {
+            if (mPolylines.size() > 0) {
+                for (Polyline poly : mPolylines) {
+                    poly.remove();
+                }
+            }
+            mPolylines.clear();
+        }
+    }
+
+    @Override
+    public void onRoutingFailure(RouteException e) {
+
+    }
+
+    @Override
+    public void onRoutingStart() {
+
+    }
+
+    @Override
+    public void onRoutingSuccess(List<Route> route, int shortestRouteIndex) {
+        refreshPolylines();
+        drawRoute(route.get(0));
+    }
+
+    private void drawRoute(Route route) {
+        PolylineOptions polyOptions = new PolylineOptions();
+        polyOptions.color(ContextCompat.getColor(this, R.color.md_blue_300));
+        polyOptions.width(DEFAULT_POLYLINE_WIDTH);
+        polyOptions.addAll(route.getPoints());
+        Polyline polyline = mMap.addPolyline(polyOptions);
+        mPolylines.add(polyline);
+    }
+
+
+    @Override
+    public void onRoutingCancelled() {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
 
 }

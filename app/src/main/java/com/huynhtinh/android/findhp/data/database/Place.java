@@ -1,6 +1,6 @@
 package com.huynhtinh.android.findhp.data.database;
 
-import com.huynhtinh.android.findhp.data.PlaceType;
+import com.huynhtinh.android.findhp.PlaceType;
 
 /**
  * Created by TINH HUYNH on 3/7/2018.
