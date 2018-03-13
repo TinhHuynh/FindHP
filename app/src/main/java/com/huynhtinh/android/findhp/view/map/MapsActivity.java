@@ -10,17 +10,26 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AutoCompleteTextView;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -29,6 +38,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.location.places.PlaceBuffer;
+import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -44,6 +55,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.huynhtinh.android.findhp.PlaceAutoCompleteAdapter;
 import com.huynhtinh.android.findhp.PlaceType;
 import com.huynhtinh.android.findhp.R;
 import com.huynhtinh.android.findhp.data.HPLocation;
@@ -53,6 +65,7 @@ import com.huynhtinh.android.findhp.data.network.api.GoogleMapService;
 import com.huynhtinh.android.findhp.data.network.map.MarkerPlaceHolder;
 import com.huynhtinh.android.findhp.data.network.map.Place;
 import com.huynhtinh.android.findhp.data.network.map.PlacesResponse;
+import com.huynhtinh.android.findhp.data.util.HPLocationUtils;
 import com.huynhtinh.android.findhp.route.AbstractRouting;
 import com.huynhtinh.android.findhp.route.Route;
 import com.huynhtinh.android.findhp.route.RouteException;
@@ -70,34 +83,50 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static android.widget.AdapterView.OnItemClickListener;
+
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, OnSuccessListener<Location>,
-        GoogleMap.OnMarkerClickListener, RoutingListener, GoogleMap.OnMarkerDragListener, View.OnClickListener {
+        GoogleMap.OnMarkerClickListener, RoutingListener, GoogleMap.OnMarkerDragListener, View.OnClickListener,
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, OnItemClickListener {
 
     private static final int LOCATION_PERMISSION_RC = 101;
     private static final long INTERVAL = 1000 * 10;
     private static final long FASTEST_INTERVAL = 5 * 1000;
     private static final int REQUEST_CHECK_SETTINGS = 102;
-    private static final int MIN_DISTANCE_TO_UPDATE_LOCATION = 100; // meter
+    private static final int MIN_DISTANCE_TO_UPDATE_LOCATION = 200; // meter
     private static final int DEFAULT_ZOOM_LEVEL = 12;
     private static final int DEFAULT_RADIUS = 5000;
     private static final int DEFAULT_ZOOM_BOUND_PADDING = 0;
     private static final float DEFAULT_POLYLINE_WIDTH = 7;
+    private static final int DEFAULT_AUTO_COMPLETE_RADIUS = 50 * 1000; // 50 km
+    private static final String LOG_TAG = "MapsActivity";
+
+
     @BindView(R.id.fab_current_location)
     FloatingActionButton mFabCurrentLocation;
+    @BindView(R.id.txt_search_location)
+    AutoCompleteTextView mTxtSearchLocation;
+    @BindView(R.id.btn_clear_auto_complete)
+    ImageButton mBtnClearAutoComplete;
+
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
-    private LatLng mCurrentLccation;
+    private LatLng mCurrentLocation;
     private LatLng mTargetLocation;
-    private Location mLastLocation;
     private LocationRequest mLocationRequest;
     private LocationCallback mLocationCallback;
-    private String mCurrentAddresss;
+    private String mTargetAddress;
     private Marker mTargetMarker;
     private GoogleMapService mGoogleMapService = GMapsClient.getClient();
+    private GoogleApiClient mGoogleApiClient;
+
     private SearchType mCurrentSearchType = SearchType.CURRENT_LOCATION;
     private PlaceType mCurrentPlaceType = PlaceType.HOSPITAL;
     private List<MarkerPlaceHolder> mMarkerPlaceHolders;
     private List<Polyline> mPolylines;
+
+    private PlaceAutoCompleteAdapter mAutoCompleteAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,7 +140,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        mTxtSearchLocation.setOnItemClickListener(this);
+
         mFabCurrentLocation.setOnClickListener(this);
+        mBtnClearAutoComplete.setOnClickListener(this);
+
+        initGoogleApiClient();
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         getLastKnownLocation();
@@ -119,6 +153,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         initLocationCallBack();
         getCurrentLocationSettings();
     }
+
 
     @Override
     protected void onResume() {
@@ -134,7 +169,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.map_activity, menu);
+        getMenuInflater().inflate(R.menu.activity_maps, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -193,8 +228,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onSuccess(Location location) {
         if (location != null) {
             updateCurrentLocationAndFetchPlaces(location);
+            initPlaceAutoCompleteAdapter();
         }
     }
+
 
     @Override
     public boolean onMarkerClick(Marker marker) {
@@ -232,16 +269,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMarkerDragEnd(Marker marker) {
         if (mTargetMarker.equals(marker)) {
             Location location = LatLngLocationConverter.convertLatLngToLocation(marker.getPosition());
-            if (checkLocationisFarEnoughFromLastLocaton(location)) {
-                if (mCurrentSearchType == SearchType.CURRENT_LOCATION) {
-                    stopLocationUpdates();
-                }
+            if (checkLocationIsFarEnoughFromLastLocaton(location)) {
+                clearPreviousSearchData();
                 mCurrentSearchType = SearchType.DRAG_LOCATION;
-                mLastLocation = location;
                 mTargetLocation = marker.getPosition();
-                refreshPlaceMarkerHolders();
-                refreshPolylines();
+                updateTargetAddressMarker(true);
                 fetchPlaces();
+            } else {
+                showShortToast(getString(R.string.msg_target_location_is_not_far));
             }
         }
     }
@@ -250,21 +285,100 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.fab_current_location:
+                clearPreviousSearchData();
                 if (mCurrentSearchType != SearchType.CURRENT_LOCATION) {
                     mCurrentSearchType = SearchType.CURRENT_LOCATION;
                     startLocationUpdates();
+                } else {
+                    moveCamera(mCurrentLocation, DEFAULT_ZOOM_LEVEL);
                 }
                 break;
+            case R.id.btn_clear_auto_complete:
+                mTxtSearchLocation.setText("");
+                break;
         }
+    }
+
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        final PlaceAutoCompleteAdapter.PlaceAutocomplete item = mAutoCompleteAdapter.getItem(position);
+        final String placeId = String.valueOf(item.placeId);
+
+        PendingResult<PlaceBuffer> placeResult = Places.GeoDataApi
+                .getPlaceById(mGoogleApiClient, placeId);
+        placeResult.setResultCallback(new ResultCallback<PlaceBuffer>() {
+            @Override
+            public void onResult(PlaceBuffer places) {
+                if (!places.getStatus().isSuccess()) {
+                    Log.e(LOG_TAG, "Place query did not complete. Error: " + places.getStatus().toString());
+                    places.release();
+                    return;
+                }
+
+                final com.google.android.gms.location.places.Place place = places.get(0);
+                Location location = LatLngLocationConverter.convertLatLngToLocation(place.getLatLng());
+                if (checkLocationIsFarEnoughFromLastLocaton(location)) {
+                    clearPreviousSearchData();
+                    mCurrentSearchType = SearchType.SEARCH_LOCATION;
+
+                    mTargetLocation = place.getLatLng();
+                    mTargetAddress = place.getAddress().toString();
+                    updateTargetAddressMarker(false);
+                    fetchPlaces();
+                } else {
+                    showShortToast(getString(R.string.msg_target_location_is_not_far));
+                }
+            }
+        });
+    }
+
+
+    private void initGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Places.GEO_DATA_API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+        mGoogleApiClient.connect();
+    }
+
+    private void initPlaceAutoCompleteAdapter() {
+        LatLngBounds latLngBounds = LocationUtils.getLatLngBounds(mCurrentLocation, DEFAULT_AUTO_COMPLETE_RADIUS);
+
+        mAutoCompleteAdapter = new PlaceAutoCompleteAdapter(this, mGoogleApiClient,
+                latLngBounds, null);
+
+        mTxtSearchLocation.setAdapter(mAutoCompleteAdapter);
     }
 
     private void checkPlaceTypeAndFetchPlaces(PlaceType placeType) {
         if (mCurrentPlaceType != placeType) {
             mCurrentPlaceType = placeType;
-            refreshPolylines();
-            refreshPlaceMarkerHolders();
+
             fetchPlaces();
         }
+    }
+
+    private void clearPreviousSearchData() {
+        refreshPolylines();
+        refreshPlaceMarkerHolders();
+        switch (mCurrentSearchType) {
+            case CURRENT_LOCATION:
+                stopLocationUpdates();
+                break;
+            case DRAG_LOCATION:
+                break;
+            case SEARCH_LOCATION:
+                clearSearchLocationText();
+                break;
+        }
+
+    }
+
+    private void clearSearchLocationText() {
+        mTxtSearchLocation.setText("");
+
     }
 
     private void updatePlaceBoundUI(MarkerPlaceHolder holder) {
@@ -273,11 +387,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         moveZoomCameraBound(destMarker);
         customizePlaceMarker(destMarker, place);
 
-        LatLng placeLatLng = LatLngLocationConverter
+        LatLng placeLatLng = HPLocationUtils
                 .convertHPLocationToLatLng(place.getGeometry()
                         .getLocation());
 
         fetchDirectionTo(placeLatLng);
+    }
+
+    private void moveZoomCameraToMyLocation() {
+
     }
 
     private void moveZoomCameraBound(Marker marker) {
@@ -289,7 +407,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //padding
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindow().getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
-        int padding = (int) (displayMetrics.widthPixels * 0.2);
+        int padding = (int) (displayMetrics.widthPixels * 0.3);
 
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         mMap.animateCamera(cu);
@@ -323,19 +441,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void updateCurrentLocationAndFetchPlaces(Location location) {
-        updateRelatedCurrentLocationData(location);
-        showShortToast(mCurrentAddresss);
-        moveCamera(mCurrentLccation, DEFAULT_ZOOM_LEVEL);
-        updateTargetMarker(mCurrentLccation);
-        mTargetLocation = mCurrentLccation;
-        mLastLocation = location;
-
-        refreshPlaceMarkerHolders();
-        refreshPolylines();
+        mCurrentLocation = LatLngLocationConverter.convertLocationToLatLng(location);
+        mTargetLocation = mCurrentLocation;
+        moveCamera(mCurrentLocation, DEFAULT_ZOOM_LEVEL);
+        updateTargetAddressMarker(true);
         fetchPlaces();
     }
 
+    private void updateTargetAddressMarker(boolean needToUpdateAddress) {
+        if (needToUpdateAddress)
+            mTargetAddress = LocationUtils.
+                    getFormattedAddressFromLocation(this,
+                            mTargetLocation.latitude, mTargetLocation.longitude);
+        showShortToast(mTargetAddress);
+        updateTargetMarker(mTargetLocation);
+    }
+
     private void fetchPlaces() {
+
         String location = LocationUtils.parseParameterString(mTargetLocation);
 
         Call<PlacesResponse> placesResponseCall = mGoogleMapService.fetchPlaces(
@@ -406,7 +529,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
                 if (mCurrentSearchType == SearchType.CURRENT_LOCATION) {
                     Location location = locationResult.getLastLocation();
-                    if (checkLocationisFarEnoughFromLastLocaton(location)) {
+                    if (checkLocationIsFarEnoughFromLastLocaton(location)) {
                         updateCurrentLocationAndFetchPlaces(location);
                     }
                 }
@@ -414,15 +537,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
     }
 
-    private void updateRelatedCurrentLocationData(Location location) {
-        mCurrentLccation = LatLngLocationConverter.convertLccationToLatLng(location);
-        mCurrentAddresss = LocationUtils.
-                getFormattedAddressFromLocation(this,
-                        location.getLatitude(), location.getLongitude());
-    }
-
-    private boolean checkLocationisFarEnoughFromLastLocaton(Location location) {
-        return mLastLocation.distanceTo(location) >= MIN_DISTANCE_TO_UPDATE_LOCATION;
+    private boolean checkLocationIsFarEnoughFromLastLocaton(Location location) {
+        Location targetLocation = LatLngLocationConverter.convertLatLngToLocation(mTargetLocation);
+        return targetLocation.distanceTo(location) >= MIN_DISTANCE_TO_UPDATE_LOCATION;
     }
 
 
@@ -471,7 +588,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .setTitle(R.string.title_permission_not_granted)
                 .setCancelable(true)
                 .setMessage(R.string.msg_can_not_listen_update_changes)
-                .create().show();
+                .create()
+                .show();
     }
 
     private void startLocationUpdates() {
@@ -602,6 +720,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMarkerDragStart(Marker marker) {
+        refreshPolylines();
+    }
+
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 

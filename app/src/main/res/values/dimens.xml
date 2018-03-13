@@ -11,6 +11,8 @@
   limitations under the License.
 -->
 <resources>
+    <dimen name="activity_horizontal_padding">16dp</dimen>
+    <dimen name="activity_vertical_padding">16dp</dimen>
     <!-- Default colors and dimens per Material Design guidelines (Last update: May 2016 release) -->
     <!-- Style -->
     <!-- Typography -->

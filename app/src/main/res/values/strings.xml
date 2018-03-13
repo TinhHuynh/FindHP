@@ -6,6 +6,10 @@
     <string name="title_permission_not_granted">Location permission is not granted</string>
     <string name="msg_permission_not_granted">Please grant location permission for getting the best places around you!</string>
     <string name="msg_can_not_listen_update_changes">Can not listen to your location\'s changes.</string>
+    <string name="msg_target_location_is_not_far">This target is near old one. Please choose further one</string>
+    <string name="hint_search_target_location">Search target location</string>
+    <string name="text_clear_search">clear search text</string>
+
 
     <!-- Map Activity menu -->
     <string name="title_find_dentist">Find dentists</string>
@@ -14,5 +18,6 @@
     <string name="title_find_hospital">Find hospitals</string>
     <string name="title_find_pharmacy">Find pharmacies</string>
     <string name="title_find_spa">Find spa</string>
+
 
 </resources>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginBottom="10dp"
+              android:layout_marginTop="10dp"
+              android:orientation="vertical"
+              android:paddingLeft="10dp"
+              android:paddingRight="10dp">
+
+    <TextView
+        android:id="@+id/txt_primary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="@dimen/material_component_lists_two_line_text_size"
+        tools:text="Quan Tri Coffee"/>
+
+    <TextView
+        android:id="@+id/txt_secondary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/material_component_cards_primary_title_bottom_padding"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="@dimen/material_component_lists_two_line_secondary_text_size"
+        tools:text="12 Ly Tu Trong, Quan 12, Ho Chi Minh"/>
+
+</LinearLayout>
