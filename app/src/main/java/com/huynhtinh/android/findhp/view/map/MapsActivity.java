@@ -1,6 +1,8 @@
 package com.huynhtinh.android.findhp.view.map;
 
 import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -15,14 +17,18 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -58,14 +64,13 @@ import com.google.android.gms.tasks.Task;
 import com.huynhtinh.android.findhp.PlaceAutoCompleteAdapter;
 import com.huynhtinh.android.findhp.PlaceType;
 import com.huynhtinh.android.findhp.R;
+import com.huynhtinh.android.findhp.SearchType;
 import com.huynhtinh.android.findhp.data.HPLocation;
-import com.huynhtinh.android.findhp.data.SearchType;
 import com.huynhtinh.android.findhp.data.network.api.GMapsClient;
 import com.huynhtinh.android.findhp.data.network.api.GoogleMapService;
 import com.huynhtinh.android.findhp.data.network.map.MarkerPlaceHolder;
 import com.huynhtinh.android.findhp.data.network.map.Place;
 import com.huynhtinh.android.findhp.data.network.map.PlacesResponse;
-import com.huynhtinh.android.findhp.data.util.HPLocationUtils;
 import com.huynhtinh.android.findhp.route.AbstractRouting;
 import com.huynhtinh.android.findhp.route.Route;
 import com.huynhtinh.android.findhp.route.RouteException;
@@ -73,6 +78,7 @@ import com.huynhtinh.android.findhp.route.Routing;
 import com.huynhtinh.android.findhp.route.RoutingListener;
 import com.huynhtinh.android.findhp.util.LatLngLocationConverter;
 import com.huynhtinh.android.findhp.util.LocationUtils;
+import com.huynhtinh.android.findhp.util.ScreenUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,14 +106,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final float DEFAULT_POLYLINE_WIDTH = 7;
     private static final int DEFAULT_AUTO_COMPLETE_RADIUS = 50 * 1000; // 50 km
     private static final String LOG_TAG = "MapsActivity";
+    private static final int DEFAULT_SELECTED_OPTION_MENU_ITEM = 3; // hospital
 
 
     @BindView(R.id.fab_current_location)
     FloatingActionButton mFabCurrentLocation;
+    @BindView(R.id.fab_view_map)
+    FloatingActionButton mFabViewMap;
     @BindView(R.id.txt_search_location)
     AutoCompleteTextView mTxtSearchLocation;
     @BindView(R.id.btn_clear_auto_complete)
     ImageButton mBtnClearAutoComplete;
+    @BindView(R.id.card_distance_duration)
+    CardView mCardDistanceDuration;
+    @BindView(R.id.txt_distance_duration)
+    TextView mTxtDistanceDuration;
 
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -124,9 +137,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PlaceType mCurrentPlaceType = PlaceType.HOSPITAL;
     private List<MarkerPlaceHolder> mMarkerPlaceHolders;
     private List<Polyline> mPolylines;
+    private MarkerPlaceHolder mSelectedHolder;
 
     private PlaceAutoCompleteAdapter mAutoCompleteAdapter;
 
+    private boolean alreadyAnimateDirectionComponents;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -170,11 +185,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_maps, menu);
+        menu.getItem(DEFAULT_SELECTED_OPTION_MENU_ITEM).setChecked(true);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        item.setChecked(!item.isChecked());
         switch (item.getItemId()) {
             case R.id.item_find_dentist:
                 checkPlaceTypeAndFetchPlaces(PlaceType.DENTIST);
@@ -238,7 +255,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (!marker.equals(mTargetMarker) && !mMarkerPlaceHolders.isEmpty()) {
             for (MarkerPlaceHolder holder : mMarkerPlaceHolders) {
                 if (holder.getMarker().equals(marker)) {
-                    updatePlaceBoundUI(holder);
+                    mSelectedHolder = holder;
+                    fetchDirectionTo(marker.getPosition());
                     break;
                 }
             }
@@ -285,12 +303,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.fab_current_location:
-                clearPreviousSearchData();
                 if (mCurrentSearchType != SearchType.CURRENT_LOCATION) {
+                    clearPreviousSearchData();
                     mCurrentSearchType = SearchType.CURRENT_LOCATION;
                     startLocationUpdates();
                 } else {
                     moveCamera(mCurrentLocation, DEFAULT_ZOOM_LEVEL);
+//                    animatePlaceDirectionsComponentsComeOut();
+
                 }
                 break;
             case R.id.btn_clear_auto_complete:
@@ -361,6 +381,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void clearPreviousSearchData() {
+        animatePlaceDirectionsComponentsComeOut();
         refreshPolylines();
         refreshPlaceMarkerHolders();
         switch (mCurrentSearchType) {
@@ -378,25 +399,68 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void clearSearchLocationText() {
         mTxtSearchLocation.setText("");
-
     }
 
-    private void updatePlaceBoundUI(MarkerPlaceHolder holder) {
-        Marker destMarker = holder.getMarker();
-        Place place = holder.getPlace();
+    private void updatePlaceBoundUI() {
+        if (mSelectedHolder == null) {
+            return;
+        }
+        Marker destMarker = mSelectedHolder.getMarker();
+        Place place = mSelectedHolder.getPlace();
         moveZoomCameraBound(destMarker);
         customizePlaceMarker(destMarker, place);
 
-        LatLng placeLatLng = HPLocationUtils
-                .convertHPLocationToLatLng(place.getGeometry()
-                        .getLocation());
+        animatePlaceDirectionsComponentsComeIn();
 
-        fetchDirectionTo(placeLatLng);
+//        LatLng placeLatLng = HPLocationUtils
+//                .convertHPLocationToLatLng(place.getGeometry()
+//                        .getLocation());
+
+//        fetchDirectionTo(placeLatLng);
     }
 
-    private void moveZoomCameraToMyLocation() {
+    private void animatePlaceDirectionsComponentsComeIn() {
+        if (!alreadyAnimateDirectionComponents) {
 
+            float cardStartValue = ScreenUtils.convertDpToPixel(60, this);
+            float fabMapStartValue = ScreenUtils.convertDpToPixel(80, this);
+
+            ObjectAnimator cardAnimation = ObjectAnimator.ofFloat(mCardDistanceDuration,
+                    "translationY", cardStartValue, 0);
+
+            ObjectAnimator fabMapAnimator = ObjectAnimator.ofFloat(mFabViewMap,
+                    "translationX", fabMapStartValue, 0);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.setDuration(300);
+            animatorSet.setInterpolator(new DecelerateInterpolator());
+            animatorSet.playTogether(cardAnimation, fabMapAnimator);
+            animatorSet.start();
+            alreadyAnimateDirectionComponents = true;
+        }
     }
+
+    private void animatePlaceDirectionsComponentsComeOut() {
+        if (alreadyAnimateDirectionComponents) {
+
+            float cardEndValue = ScreenUtils.convertDpToPixel(60, this);
+            float fabMapEndValue = ScreenUtils.convertDpToPixel(80, this);
+
+            ObjectAnimator cardAnimation = ObjectAnimator.ofFloat(mCardDistanceDuration,
+                    "translationY", 0, cardEndValue);
+
+            ObjectAnimator fabMapAnimator = ObjectAnimator.ofFloat(mFabViewMap,
+                    "translationX", 0, fabMapEndValue);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.setDuration(300);
+            animatorSet.setInterpolator(new AccelerateInterpolator());
+            animatorSet.playTogether(cardAnimation, fabMapAnimator);
+            animatorSet.start();
+            alreadyAnimateDirectionComponents = false;
+        }
+    }
+
 
     private void moveZoomCameraBound(Marker marker) {
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
@@ -411,6 +475,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         mMap.animateCamera(cu);
+
     }
 
     private void moveZoomCameraBound(List<Marker> markers) {
@@ -695,7 +760,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onRoutingSuccess(List<Route> route, int shortestRouteIndex) {
         refreshPolylines();
+
+        String distanceAndDuration = route.get(0).getDistanceText() + " - " +
+                route.get(0).getDurationText();
+
+        mTxtDistanceDuration.setText(distanceAndDuration);
         drawRoute(route.get(0));
+        updatePlaceBoundUI();
+
     }
 
     private void drawRoute(Route route) {

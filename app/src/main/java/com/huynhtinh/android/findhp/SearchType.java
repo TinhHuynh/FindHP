@@ -1,4 +1,4 @@
-package com.huynhtinh.android.findhp.data;
+package com.huynhtinh.android.findhp;
 
 /**
  * Created by TINH HUYNH on 3/11/2018.
