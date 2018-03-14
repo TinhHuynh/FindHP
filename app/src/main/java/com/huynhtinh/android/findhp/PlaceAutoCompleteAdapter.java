@@ -64,7 +64,7 @@ public class PlaceAutoCompleteAdapter
     private static final String TAG = "PlaceAutocomplete";
 
     private static final CharacterStyle STYLE_BOLD = new StyleSpan(Typeface.BOLD);
-    private static final CharacterStyle STYLE_NORMRAL = new StyleSpan(Typeface.NORMAL);
+    private static final CharacterStyle STYLE_NORMAL = new StyleSpan(Typeface.NORMAL);
     /**
      * Handles autocomplete requests.
      */
@@ -224,7 +224,7 @@ public class PlaceAutoCompleteAdapter
                 AutocompletePrediction prediction = iterator.next();
                 // Get the details of this prediction and copy it into a new PlaceAutocomplete object.
                 resultList.add(new PlaceAutocomplete(prediction.getPlaceId(),
-                        prediction.getPrimaryText(STYLE_BOLD), prediction.getSecondaryText(STYLE_NORMRAL)));
+                        prediction.getPrimaryText(STYLE_BOLD), prediction.getSecondaryText(STYLE_NORMAL)));
             }
 
             // Release the buffer now that all data has been copied.

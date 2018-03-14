@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -57,7 +59,6 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -71,11 +72,13 @@ import com.huynhtinh.android.findhp.data.network.api.GoogleMapService;
 import com.huynhtinh.android.findhp.data.network.map.MarkerPlaceHolder;
 import com.huynhtinh.android.findhp.data.network.map.Place;
 import com.huynhtinh.android.findhp.data.network.map.PlacesResponse;
+import com.huynhtinh.android.findhp.data.util.HPLocationUtils;
 import com.huynhtinh.android.findhp.route.AbstractRouting;
 import com.huynhtinh.android.findhp.route.Route;
 import com.huynhtinh.android.findhp.route.RouteException;
 import com.huynhtinh.android.findhp.route.Routing;
 import com.huynhtinh.android.findhp.route.RoutingListener;
+import com.huynhtinh.android.findhp.util.BloodRouteDrawer;
 import com.huynhtinh.android.findhp.util.LatLngLocationConverter;
 import com.huynhtinh.android.findhp.util.LocationUtils;
 import com.huynhtinh.android.findhp.util.ScreenUtils;
@@ -113,6 +116,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     FloatingActionButton mFabCurrentLocation;
     @BindView(R.id.fab_view_map)
     FloatingActionButton mFabViewMap;
+    @BindView(R.id.fab_view_place)
+    FloatingActionButton mFabViewPlace;
     @BindView(R.id.txt_search_location)
     AutoCompleteTextView mTxtSearchLocation;
     @BindView(R.id.btn_clear_auto_complete)
@@ -138,6 +143,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<MarkerPlaceHolder> mMarkerPlaceHolders;
     private List<Polyline> mPolylines;
     private MarkerPlaceHolder mSelectedHolder;
+    private BloodRouteDrawer mBloodRouteDrawer = new BloodRouteDrawer();
 
     private PlaceAutoCompleteAdapter mAutoCompleteAdapter;
 
@@ -149,16 +155,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_maps);
         ButterKnife.bind(this);
 
-        grantLocationPermissionsIfNeeded();
+//        grantLocationPermissionsIfNeeded();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         mTxtSearchLocation.setOnItemClickListener(this);
-
         mFabCurrentLocation.setOnClickListener(this);
         mBtnClearAutoComplete.setOnClickListener(this);
+        mFabViewMap.setOnClickListener(this);
 
         initGoogleApiClient();
 
@@ -169,6 +175,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         getCurrentLocationSettings();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
 
     @Override
     protected void onResume() {
@@ -192,6 +202,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         item.setChecked(!item.isChecked());
+        clearPreviousSearchData();
         switch (item.getItemId()) {
             case R.id.item_find_dentist:
                 checkPlaceTypeAndFetchPlaces(PlaceType.DENTIST);
@@ -256,7 +267,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             for (MarkerPlaceHolder holder : mMarkerPlaceHolders) {
                 if (holder.getMarker().equals(marker)) {
                     mSelectedHolder = holder;
-                    fetchDirectionTo(marker.getPosition());
+                    updatePlaceBoundUI();
                     break;
                 }
             }
@@ -316,6 +327,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.btn_clear_auto_complete:
                 mTxtSearchLocation.setText("");
                 break;
+            case R.id.fab_view_map:
+                openGoogleMapDirection();
+                break;
         }
     }
 
@@ -351,6 +365,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+    }
+
+    private void openGoogleMapDirection() {
+        String startLocation = LocationUtils.getFormattedAddressFromLocation(this,
+                mTargetLocation.latitude, mTargetLocation.longitude);
+
+
+        String endLocation = LocationUtils.getFormattedAddressFromLocation(this,
+                mSelectedHolder.getPlace().getGeometry().getLocation().getLat(),
+                mSelectedHolder.getPlace().getGeometry().getLocation().getLng());
+
+        Uri uri = Uri.parse("https://www.google.com/maps/dir/?api=1" +
+                "&origin=" + startLocation +
+                "&destination=" + endLocation +
+                "&travelmode=driving");
+
+        Intent intent = new Intent(android.content.Intent.ACTION_VIEW, uri);
+        startActivity(intent);
     }
 
 
@@ -412,18 +444,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         animatePlaceDirectionsComponentsComeIn();
 
-//        LatLng placeLatLng = HPLocationUtils
-//                .convertHPLocationToLatLng(place.getGeometry()
-//                        .getLocation());
+        LatLng placeLatLng = HPLocationUtils
+                .convertHPLocationToLatLng(place.getGeometry()
+                        .getLocation());
 
-//        fetchDirectionTo(placeLatLng);
+        fetchDirectionTo(placeLatLng);
     }
 
     private void animatePlaceDirectionsComponentsComeIn() {
         if (!alreadyAnimateDirectionComponents) {
 
             float cardStartValue = ScreenUtils.convertDpToPixel(60, this);
-            float fabMapStartValue = ScreenUtils.convertDpToPixel(80, this);
+            float fabMapStartValue = ScreenUtils.convertDpToPixel(75, this);
 
             ObjectAnimator cardAnimation = ObjectAnimator.ofFloat(mCardDistanceDuration,
                     "translationY", cardStartValue, 0);
@@ -431,10 +463,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             ObjectAnimator fabMapAnimator = ObjectAnimator.ofFloat(mFabViewMap,
                     "translationX", fabMapStartValue, 0);
 
+            ObjectAnimator fabViewAnimator = ObjectAnimator.ofFloat(mFabViewPlace,
+                    "translationX", fabMapStartValue, 0);
+
             AnimatorSet animatorSet = new AnimatorSet();
             animatorSet.setDuration(300);
             animatorSet.setInterpolator(new DecelerateInterpolator());
-            animatorSet.playTogether(cardAnimation, fabMapAnimator);
+            animatorSet.playTogether(cardAnimation, fabMapAnimator, fabViewAnimator);
             animatorSet.start();
             alreadyAnimateDirectionComponents = true;
         }
@@ -444,7 +479,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (alreadyAnimateDirectionComponents) {
 
             float cardEndValue = ScreenUtils.convertDpToPixel(60, this);
-            float fabMapEndValue = ScreenUtils.convertDpToPixel(80, this);
+            float fabMapEndValue = ScreenUtils.convertDpToPixel(75, this);
 
             ObjectAnimator cardAnimation = ObjectAnimator.ofFloat(mCardDistanceDuration,
                     "translationY", 0, cardEndValue);
@@ -452,10 +487,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             ObjectAnimator fabMapAnimator = ObjectAnimator.ofFloat(mFabViewMap,
                     "translationX", 0, fabMapEndValue);
 
+            ObjectAnimator fabViewAnimator = ObjectAnimator.ofFloat(mFabViewPlace,
+                    "translationX", 0, fabMapEndValue);
+
             AnimatorSet animatorSet = new AnimatorSet();
             animatorSet.setDuration(300);
             animatorSet.setInterpolator(new AccelerateInterpolator());
-            animatorSet.playTogether(cardAnimation, fabMapAnimator);
+            animatorSet.playTogether(cardAnimation, fabMapAnimator, fabViewAnimator);
             animatorSet.start();
             alreadyAnimateDirectionComponents = false;
         }
@@ -523,6 +561,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void fetchPlaces() {
+        if (mTargetLocation == null) {
+            return;
+        }
 
         String location = LocationUtils.parseParameterString(mTargetLocation);
 
@@ -548,8 +589,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void handlePlacesList(List<Place> places) {
         refreshPlaceMarkerHolders();
         List<Marker> markers = new ArrayList<>();
+        int iconRes = getIconResForMarker();
         for (Place place : places) {
-            Marker placeMarker = addPlaceMarker(place.getGeometry().getLocation());
+            Marker placeMarker = addPlaceMarker(place.getGeometry().getLocation(), iconRes);
             MarkerPlaceHolder holder = new MarkerPlaceHolder(placeMarker, place);
             mMarkerPlaceHolders.add(holder);
             markers.add(placeMarker);
@@ -558,12 +600,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-    private Marker addPlaceMarker(HPLocation location) {
+    private Marker addPlaceMarker(HPLocation location, @DrawableRes int resIcon) {
         MarkerOptions options = new MarkerOptions();
         options.icon(BitmapDescriptorFactory
-                .defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                .fromResource(resIcon))
                 .position(new LatLng(location.getLat(), location.getLng()));
         return mMap.addMarker(options);
+    }
+
+    private int getIconResForMarker() {
+        switch (mCurrentPlaceType) {
+            case DENTIST:
+                return R.drawable.ic_dentist;
+            case DOCTOR:
+                return R.drawable.ic_doctor;
+            case GYM:
+                return R.drawable.ic_gym;
+            case HOSPITAL:
+                return R.drawable.ic_hospital;
+            case PHARMARCY:
+                return R.drawable.ic_pharmacy;
+            case SPA:
+                return R.drawable.ic_spa;
+            default:
+                return R.drawable.ic_hospital;
+        }
     }
 
     private void updateTargetMarker(LatLng latLng) {
@@ -579,8 +640,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void moveCamera(LatLng latLng, int zoomLevel) {
-        CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel);
-        mMap.animateCamera(camera);
+        if (latLng != null) {
+            CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel);
+            mMap.animateCamera(camera);
+        }
     }
 
 
@@ -609,6 +672,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     private void getLastKnownLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            grantLocationPermissionsIfNeeded();
+            return;
+        }
         mFusedLocationClient.getLastLocation().addOnSuccessListener(this);
     }
 
@@ -658,6 +726,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+//            grantLocationPermissionsIfNeeded();
+            return;
+        }
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
     }
 
@@ -673,7 +748,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             } else {
                 requestLocationPermission();
             }
-
         }
     }
 
@@ -699,10 +773,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         requestLocationPermission();
+                        dialog.dismiss();
                     }
                 })
                 .setMessage(R.string.msg_permission_not_granted)
-                .create().show();
+                .create()
+                .show();
     }
 
     private void requestLocationPermission() {
@@ -735,16 +811,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void refreshPolylines() {
-        if (mPolylines == null) {
-            mPolylines = new ArrayList<>();
-        } else {
-            if (mPolylines.size() > 0) {
-                for (Polyline poly : mPolylines) {
-                    poly.remove();
-                }
-            }
-            mPolylines.clear();
-        }
+//        if (mPolylines == null) {
+//            mPolylines = new ArrayList<>();
+//        } else {
+//            if (mPolylines.size() > 0) {
+//                for (Polyline poly : mPolylines) {
+//                    poly.remove();
+//                }
+//            }
+//            mPolylines.clear();
+//        }
+        mBloodRouteDrawer.clearAnimate();
     }
 
     @Override
@@ -766,17 +843,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mTxtDistanceDuration.setText(distanceAndDuration);
         drawRoute(route.get(0));
-        updatePlaceBoundUI();
 
     }
 
     private void drawRoute(Route route) {
-        PolylineOptions polyOptions = new PolylineOptions();
-        polyOptions.color(ContextCompat.getColor(this, R.color.md_blue_300));
-        polyOptions.width(DEFAULT_POLYLINE_WIDTH);
-        polyOptions.addAll(route.getPoints());
-        Polyline polyline = mMap.addPolyline(polyOptions);
-        mPolylines.add(polyline);
+
+        mBloodRouteDrawer.animateRoute(mMap, route.getPoints(), ContextCompat.getColor(this, R.color.colorPrimary),
+                ContextCompat.getColor(this, R.color.colorPrimaryDark), (int) DEFAULT_POLYLINE_WIDTH);
+//        PolylineOptions polyOptions = new PolylineOptions();
+//        polyOptions.color(ContextCompat.getColor(this, R.color.md_blue_300));
+//        polyOptions.width(DEFAULT_POLYLINE_WIDTH);
+//        polyOptions.addAll(route.getPoints());
+//        Polyline polyline = mMap.addPolyline(polyOptions);
+//        mPolylines.add(polyline);
     }
 
 

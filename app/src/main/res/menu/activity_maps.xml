@@ -5,26 +5,32 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/item_find_dentist"
+            android:icon="@drawable/ic_dentist"
             android:title="@string/title_find_dentist"
             app:showAsAction="never"/>
         <item
             android:id="@+id/item_find_doctor"
+            android:icon="@drawable/ic_doctor"
             android:title="@string/title_find_doctor"
             app:showAsAction="never"/>
         <item
             android:id="@+id/item_find_gym"
+            android:icon="@drawable/ic_gym"
             android:title="@string/title_find_gym"
             app:showAsAction="never"/>
         <item
             android:id="@+id/item_find_hospital"
+            android:icon="@drawable/ic_hospital"
             android:title="@string/title_find_hospital"
             app:showAsAction="never"/>
         <item
             android:id="@+id/item_find_pharmacy"
+            android:icon="@drawable/ic_pharmacy"
             android:title="@string/title_find_pharmacy"
             app:showAsAction="never"/>
         <item
             android:id="@+id/item_find_spa"
+            android:icon="@drawable/ic_spa"
             android:title="@string/title_find_spa"
             app:showAsAction="never"/>
     </group>
