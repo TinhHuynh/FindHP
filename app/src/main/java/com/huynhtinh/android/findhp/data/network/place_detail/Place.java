@@ -127,4 +127,21 @@ public class Place {
         this.website = website;
     }
 
+    @Override
+    public String toString() {
+        return "Place{" +
+                "address='" + address + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", geometry=" + geometry +
+                ", id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", openingHours=" + openingHours +
+                ", photos=" + photos +
+                ", placeId='" + placeId + '\'' +
+                ", rating=" + rating +
+                ", reviews=" + reviews +
+                ", url='" + url + '\'' +
+                ", website='" + website + '\'' +
+                '}';
+    }
 }

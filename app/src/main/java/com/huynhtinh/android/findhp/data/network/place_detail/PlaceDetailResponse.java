@@ -4,7 +4,7 @@ package com.huynhtinh.android.findhp.data.network.place_detail;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class PlacesDetailResponse {
+public class PlaceDetailResponse {
 
     @SerializedName("result")
     @Expose

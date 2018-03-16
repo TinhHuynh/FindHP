@@ -82,6 +82,7 @@ import com.huynhtinh.android.findhp.util.BloodRouteDrawer;
 import com.huynhtinh.android.findhp.util.LatLngLocationConverter;
 import com.huynhtinh.android.findhp.util.LocationUtils;
 import com.huynhtinh.android.findhp.util.ScreenUtils;
+import com.huynhtinh.android.findhp.view.place_detail.PlaceDetailActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,6 +111,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int DEFAULT_AUTO_COMPLETE_RADIUS = 50 * 1000; // 50 km
     private static final String LOG_TAG = "MapsActivity";
     private static final int DEFAULT_SELECTED_OPTION_MENU_ITEM = 3; // hospital
+    private static final String TAG = "MapsActivity";
 
 
     @BindView(R.id.fab_current_location)
@@ -165,6 +167,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mFabCurrentLocation.setOnClickListener(this);
         mBtnClearAutoComplete.setOnClickListener(this);
         mFabViewMap.setOnClickListener(this);
+        mFabViewPlace.setOnClickListener(this);
 
         initGoogleApiClient();
 
@@ -330,6 +333,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.fab_view_map:
                 openGoogleMapDirection();
                 break;
+            case R.id.fab_view_place:
+                goToPlaceDetail();
         }
     }
 
@@ -367,6 +372,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+    private void goToPlaceDetail() {
+        Intent intent = PlaceDetailActivity.getIntent(this,
+                mSelectedHolder.getPlace().getPlaceId());
+        startActivity(intent);
+    }
+
     private void openGoogleMapDirection() {
         String startLocation = LocationUtils.getFormattedAddressFromLocation(this,
                 mTargetLocation.latitude, mTargetLocation.longitude);
@@ -384,7 +395,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent intent = new Intent(android.content.Intent.ACTION_VIEW, uri);
         startActivity(intent);
     }
-
 
     private void initGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -407,7 +417,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void checkPlaceTypeAndFetchPlaces(PlaceType placeType) {
         if (mCurrentPlaceType != placeType) {
             mCurrentPlaceType = placeType;
-
             fetchPlaces();
         }
     }
@@ -576,12 +585,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         call.enqueue(new Callback<PlacesResponse>() {
             @Override
             public void onResponse(@NonNull Call<PlacesResponse> call, @NonNull Response<PlacesResponse> response) {
-                handlePlacesList(response.body().getResults());
+                if (response.isSuccessful()) {
+                    handlePlacesList(response.body().getResults());
+                } else {
+                    Log.d(TAG, response.message());
+                }
             }
 
             @Override
             public void onFailure(@NonNull Call<PlacesResponse> call, @NonNull Throwable t) {
-                t.printStackTrace();
+                Log.d(TAG, t.getMessage());
             }
         });
     }

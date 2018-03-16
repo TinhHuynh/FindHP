@@ -17,8 +17,7 @@ public class GMapsClient {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        GoogleMapService service = retrofit.create(GoogleMapService.class);
-        return service;
+        return retrofit.create(GoogleMapService.class);
     }
 
 }
