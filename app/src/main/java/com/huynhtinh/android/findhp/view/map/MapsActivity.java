@@ -224,8 +224,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        item.setChecked(!item.isChecked());
-        clearPreviousSearchData();
+        if (item.getItemId() != android.R.id.home) {
+            item.setChecked(!item.isChecked());
+            clearPreviousSearchData();
+        }
         switch (item.getItemId()) {
             case R.id.item_find_dentist:
                 checkPlaceTypeAndFetchPlaces(PlaceType.DENTIST);
@@ -247,6 +249,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
             case android.R.id.home:
                 mDrawerLayout.openDrawer(Gravity.START);
+                break;
 
         }
         return true;
