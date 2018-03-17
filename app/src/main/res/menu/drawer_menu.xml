@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/item_view_saved_placed"
+        android:icon="@drawable/ic_bookmark"
+        android:title="@string/title_view_saved_places"
+        app:showAsAction="always"/>
+</menu>

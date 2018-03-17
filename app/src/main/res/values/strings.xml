@@ -18,6 +18,7 @@
     <string name="title_find_hospital">Find hospitals</string>
     <string name="title_find_pharmacy">Find pharmacies</string>
     <string name="title_find_spa">Find spa</string>
+    <string name="title_view_saved_places">View saved places</string>
 
 
 </resources>

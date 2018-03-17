@@ -16,6 +16,7 @@
     <uses-feature android:name="android.hardware.location.gps"/>
 
     <application
+        android:name=".FindHPApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -38,7 +39,8 @@
         <activity
             android:name=".view.map.MapsActivity"
             android:label="@string/title_activity_maps"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:theme="@style/MapTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -47,6 +49,12 @@
         </activity>
         <activity
             android:name=".view.place_detail.PlaceDetailActivity"
+            android:label="Place Detail"
+            android:parentActivityName=".view.map.MapsActivity">
+        </activity>
+        <activity
+            android:name=".view.saved_list_places.SavedPlaceActivity"
+            android:label="Saved Places"
             android:parentActivityName=".view.map.MapsActivity">
         </activity>
     </application>

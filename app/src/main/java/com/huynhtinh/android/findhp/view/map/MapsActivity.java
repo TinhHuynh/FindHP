@@ -16,12 +16,17 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -83,6 +88,7 @@ import com.huynhtinh.android.findhp.util.LatLngLocationConverter;
 import com.huynhtinh.android.findhp.util.LocationUtils;
 import com.huynhtinh.android.findhp.util.ScreenUtils;
 import com.huynhtinh.android.findhp.view.place_detail.PlaceDetailActivity;
+import com.huynhtinh.android.findhp.view.saved_list_places.SavedPlaceActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +103,7 @@ import static android.widget.AdapterView.OnItemClickListener;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, OnSuccessListener<Location>,
         GoogleMap.OnMarkerClickListener, RoutingListener, GoogleMap.OnMarkerDragListener, View.OnClickListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, OnItemClickListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, OnItemClickListener, NavigationView.OnNavigationItemSelectedListener {
 
     private static final int LOCATION_PERMISSION_RC = 101;
     private static final long INTERVAL = 1000 * 10;
@@ -128,6 +134,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     CardView mCardDistanceDuration;
     @BindView(R.id.txt_distance_duration)
     TextView mTxtDistanceDuration;
+    @BindView(R.id.drawer_layout)
+    DrawerLayout mDrawerLayout;
+    @BindView(R.id.nav_view)
+    NavigationView mNavigationView;
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+
 
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -168,6 +181,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mBtnClearAutoComplete.setOnClickListener(this);
         mFabViewMap.setOnClickListener(this);
         mFabViewPlace.setOnClickListener(this);
+        initToolBar();
+        initNavView();
 
         initGoogleApiClient();
 
@@ -178,6 +193,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         getCurrentLocationSettings();
     }
 
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -186,13 +202,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onResume() {
         super.onResume();
-        startLocationUpdates();
+        if (mCurrentSearchType == SearchType.CURRENT_LOCATION) {
+            startLocationUpdates();
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        stopLocationUpdates();
+        if (mCurrentSearchType == SearchType.CURRENT_LOCATION) {
+            stopLocationUpdates();
+        }
     }
 
     @Override
@@ -225,10 +245,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.item_find_spa:
                 checkPlaceTypeAndFetchPlaces(PlaceType.SPA);
                 break;
+            case android.R.id.home:
+                mDrawerLayout.openDrawer(Gravity.START);
 
         }
-        return super.onOptionsItemSelected(item);
+        return true;
     }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        mDrawerLayout.closeDrawers();
+        switch (item.getItemId()) {
+            case R.id.item_view_saved_placed:
+                goToSavedPlaceScreen();
+                break;
+        }
+        return true;
+    }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -334,7 +368,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 openGoogleMapDirection();
                 break;
             case R.id.fab_view_place:
-                goToPlaceDetail();
+                goToPlaceDetailScreen();
         }
     }
 
@@ -372,10 +406,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private void goToPlaceDetail() {
+    private void initToolBar() {
+        setSupportActionBar(mToolbar);
+        ActionBar actionbar = getSupportActionBar();
+        if (actionbar != null) {
+            actionbar.setDisplayHomeAsUpEnabled(true);
+            actionbar.setHomeAsUpIndicator(R.drawable.ic_menu);
+        }
+    }
+
+    private void initNavView() {
+        mNavigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void goToPlaceDetailScreen() {
         Intent intent = PlaceDetailActivity.getIntent(this,
                 mSelectedHolder.getPlace().getPlaceId());
         startActivity(intent);
+    }
+
+
+    private void goToSavedPlaceScreen() {
+        startActivity(SavedPlaceActivity.getIntent(this));
     }
 
     private void openGoogleMapDirection() {
