@@ -518,8 +518,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void animatePlaceDirectionsComponentsComeIn() {
         if (!alreadyAnimateDirectionComponents) {
 
-            float cardStartValue = ScreenUtils.convertDpToPixel(60, this);
-            float fabMapStartValue = ScreenUtils.convertDpToPixel(75, this);
+            float cardStartValue = ScreenUtils.convertDpToPixel(this, 100);
+            float fabMapStartValue = ScreenUtils.convertDpToPixel(this, 100);
 
             ObjectAnimator cardAnimation = ObjectAnimator.ofFloat(mCardDistanceDuration,
                     "translationY", cardStartValue, 0);
@@ -542,8 +542,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void animatePlaceDirectionsComponentsComeOut() {
         if (alreadyAnimateDirectionComponents) {
 
-            float cardEndValue = ScreenUtils.convertDpToPixel(60, this);
-            float fabMapEndValue = ScreenUtils.convertDpToPixel(75, this);
+            float cardEndValue = ScreenUtils.convertDpToPixel(this, 100);
+            float fabMapEndValue = ScreenUtils.convertDpToPixel(this, 100);
 
             ObjectAnimator cardAnimation = ObjectAnimator.ofFloat(mCardDistanceDuration,
                     "translationY", 0, cardEndValue);
