@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">@color/md_green_500</color>
-    <color name="colorPrimaryDark">@color/md_green_700</color>
+    <color name="colorPrimary">@color/md_green_A400</color>
+    <color name="colorPrimaryDark">@color/md_green_A700</color>
     <color name="colorAccent">@color/md_deep_purple_400</color>
 
     <!--reds-->
@@ -161,7 +161,7 @@
     <color name="md_green_900">#1B5E20</color>
     <color name="md_green_A100">#B9F6CA</color>
     <color name="md_green_A200">#69F0AE</color>
-    <color name="md_green_A400">#00E676</color>
+    <color name="md_green_A400">#02d76f</color>
     <color name="md_green_A700">#00C853</color>
 
     <!--light green-->
