@@ -3,6 +3,7 @@ package com.huynhtinh.android.findhp.view.place_detail;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,11 +12,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RatingBar;
-import android.widget.TextView;
+import android.widget.*;
 
 import com.huynhtinh.android.findhp.PlaceType;
 import com.huynhtinh.android.findhp.R;
@@ -76,17 +73,17 @@ public class PlaceDetailActivity extends AppCompatActivity {
         fetchPlaceByPlaceId(placeId);
         mDbHelper = new PlaceDbHelper(getApplicationContext());
 
-        hpImageView = (ImageView) findViewById(R.id.hp_image_view);
-        hpNameTv = (TextView) findViewById(R.id.hp_name_text_view);
-        hpAddressTv = (TextView) findViewById(R.id.hp_address_text_view);
-        hpRatingBar = (RatingBar) findViewById(R.id.hp_rating_bar);
-        rateIndexTv = (TextView) findViewById(R.id.rate_index_text_view);
-        phoneTv = (TextView) findViewById(R.id.phone_number_text_view);
-        photoRv = (RecyclerView) findViewById(R.id.photos_recycler_view);
-        workingDaysRv = (RecyclerView) findViewById(R.id.working_days_recycler_view);
-        openNowTv = (TextView) findViewById(R.id.openNowTv);
-        reviewsRv = (RecyclerView) findViewById(R.id.reviews_recycler_view);
-        contactLayout = (LinearLayout) findViewById(R.id.contact_linear_out);
+        hpImageView = findViewById(R.id.hp_image_view);
+        hpNameTv = findViewById(R.id.hp_name_text_view);
+        hpAddressTv = findViewById(R.id.hp_address_text_view);
+        hpRatingBar = findViewById(R.id.hp_rating_bar);
+        rateIndexTv = findViewById(R.id.rate_index_text_view);
+        phoneTv = findViewById(R.id.phone_number_text_view);
+        photoRv = findViewById(R.id.photos_recycler_view);
+        workingDaysRv = findViewById(R.id.working_days_recycler_view);
+        openNowTv = findViewById(R.id.openNowTv);
+        reviewsRv = findViewById(R.id.reviews_recycler_view);
+        contactLayout = findViewById(R.id.contact_linear_out);
     }
 
     private void fetchPlaceByPlaceId(String id) {
@@ -179,7 +176,6 @@ public class PlaceDetailActivity extends AppCompatActivity {
     public void saveToFavorite(View view) {
         String placeId = getIntent().getStringExtra(KEY_PLACE_ID);
         String placeType = getIntent().getStringExtra(KEY_PLACE_TYPE);
-//        String id = mPlace.getPlaceId();
         String name = mPlace.getName();
         String address = mPlace.getAddress();
 
@@ -194,6 +190,25 @@ public class PlaceDetailActivity extends AppCompatActivity {
         values.put(PlaceContract.PlaceEntry.COL_ADDRESS, address);
         values.put(PlaceContract.PlaceEntry.COL_PLACE_TYPE, placeType);
 
-        mDbHelper.getWritableDatabase().insert(PlaceContract.PlaceEntry.TABLE_NAME, null, values);
+        if (isPlaceExisting(placeId)) {
+            Toast.makeText(this, "Place already added.", Toast.LENGTH_SHORT).show();
+        } else {
+            mDbHelper.getWritableDatabase().insert(PlaceContract.PlaceEntry.TABLE_NAME, null, values);
+            Toast.makeText(this, "Added to favorite.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean isPlaceExisting(String placeId) {
+        Cursor cursor = mDbHelper.getReadableDatabase().query(
+            PlaceContract.PlaceEntry.TABLE_NAME,
+            new String[] { "place_id" },
+            "place_id = ?",
+            new String[] { placeId },
+            null,
+            null,
+            null
+        );
+
+        return cursor.getCount() > 0;
     }
 }
