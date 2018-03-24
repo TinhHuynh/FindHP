@@ -424,7 +424,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void goToPlaceDetailScreen() {
         Intent intent = PlaceDetailActivity.getIntent(this,
-                mSelectedHolder.getPlace().getPlaceId());
+                mSelectedHolder.getPlace().getPlaceId(), mCurrentPlaceType.toString());
         startActivity(intent);
     }
 

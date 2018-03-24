@@ -19,6 +19,7 @@ public class PlaceDbHelper extends SQLiteOpenHelper {
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + PlaceEntry.TABLE_NAME + " (" +
                     PlaceEntry._ID + " INTEGER PRIMARY KEY," +
+                    PlaceEntry.COL_PLACE_ID + " TEXT," +
                     PlaceEntry.COL_NAME + " TEXT," +
                     PlaceEntry.COL_ADDRESS + " TEXT," +
                     PlaceEntry.COL_PLACE_TYPE + " TEXT)";

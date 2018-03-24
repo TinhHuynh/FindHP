@@ -1,5 +1,6 @@
 package com.huynhtinh.android.findhp.view.place_detail;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -16,8 +17,11 @@ import android.widget.LinearLayout;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
+import com.huynhtinh.android.findhp.PlaceType;
 import com.huynhtinh.android.findhp.R;
 import com.huynhtinh.android.findhp.data.Photo;
+import com.huynhtinh.android.findhp.data.database.PlaceContract;
+import com.huynhtinh.android.findhp.data.database.PlaceDbHelper;
 import com.huynhtinh.android.findhp.data.network.Configs;
 import com.huynhtinh.android.findhp.data.network.api.GMapsClient;
 import com.huynhtinh.android.findhp.data.network.api.GoogleMapService;
@@ -38,10 +42,12 @@ import retrofit2.Response;
 public class PlaceDetailActivity extends AppCompatActivity {
 
     private static final String KEY_PLACE_ID = "place_id";
+    private static final String KEY_PLACE_TYPE = "place_type";
     private static final String TAG = "PlaceDetailActivity";
 
     private GoogleMapService mGoogleMapService = GMapsClient.getClient();
     private Place mPlace;
+    private PlaceDbHelper mDbHelper;
 
     private ImageView hpImageView;
     private TextView hpNameTv;
@@ -55,9 +61,10 @@ public class PlaceDetailActivity extends AppCompatActivity {
     private RecyclerView reviewsRv;
     private LinearLayout contactLayout;
 
-    public static Intent getIntent(Context packageContext, String placeId) {
+    public static Intent getIntent(Context packageContext, String placeId, String placeType) {
         Intent intent = new Intent(packageContext, PlaceDetailActivity.class);
         intent.putExtra(KEY_PLACE_ID, placeId);
+        intent.putExtra(KEY_PLACE_TYPE, placeType);
         return intent;
     }
 
@@ -67,6 +74,7 @@ public class PlaceDetailActivity extends AppCompatActivity {
         setContentView(R.layout.fragment_place_detail);
         String placeId = getIntent().getStringExtra(KEY_PLACE_ID);
         fetchPlaceByPlaceId(placeId);
+        mDbHelper = new PlaceDbHelper(getApplicationContext());
 
         hpImageView = (ImageView) findViewById(R.id.hp_image_view);
         hpNameTv = (TextView) findViewById(R.id.hp_name_text_view);
@@ -131,20 +139,21 @@ public class PlaceDetailActivity extends AppCompatActivity {
                         photoRv.setAdapter(adapter);
                         photoRv.setLayoutManager(new LinearLayoutManager(PlaceDetailActivity.this, LinearLayout.HORIZONTAL, false));
                     }
-
-                    List<String> daytimeList = mPlace.getOpeningHours().getWeekdayText();
-                    if(daytimeList != null) {
-                        if(mPlace.getOpeningHours().getOpenNow()) {
-                            openNowTv.setText("Now Opening");
-                            openNowTv.setTextColor(Color.BLUE);
-                        } else {
-                            openNowTv.setText("Now Closing");
-                            openNowTv.setTextColor(Color.RED);
+                    if (mPlace.getOpeningHours() != null) {
+                        List<String> daytimeList = mPlace.getOpeningHours().getWeekdayText();
+                        if(daytimeList != null) {
+                            if(mPlace.getOpeningHours().getOpenNow()) {
+                                openNowTv.setText("Now Opening");
+                                openNowTv.setTextColor(Color.BLUE);
+                            } else {
+                                openNowTv.setText("Now Closing");
+                                openNowTv.setTextColor(Color.RED);
+                            }
+                            WorkingDaysAdapter adapter = new WorkingDaysAdapter(PlaceDetailActivity.this, daytimeList);
+                            workingDaysRv.setHasFixedSize(true);
+                            workingDaysRv.setAdapter(adapter);
+                            workingDaysRv.setLayoutManager(new LinearLayoutManager(PlaceDetailActivity.this));
                         }
-                        WorkingDaysAdapter adapter = new WorkingDaysAdapter(PlaceDetailActivity.this, daytimeList);
-                        workingDaysRv.setHasFixedSize(true);
-                        workingDaysRv.setAdapter(adapter);
-                        workingDaysRv.setLayoutManager(new LinearLayoutManager(PlaceDetailActivity.this));
                     }
                     if(mPlace.getReviews() != null) {
                         ReviewsAdapter adapter = new ReviewsAdapter(PlaceDetailActivity.this, mPlace.getReviews());
@@ -167,4 +176,24 @@ public class PlaceDetailActivity extends AppCompatActivity {
     }
 
 
+    public void saveToFavorite(View view) {
+        String placeId = getIntent().getStringExtra(KEY_PLACE_ID);
+        String placeType = getIntent().getStringExtra(KEY_PLACE_TYPE);
+//        String id = mPlace.getPlaceId();
+        String name = mPlace.getName();
+        String address = mPlace.getAddress();
+
+        saveToDatabase(placeId, placeType, name, address);
+    }
+
+    private void saveToDatabase(String placeId, String placeType, String name, String address) {
+        ContentValues values = new ContentValues();
+
+        values.put(PlaceContract.PlaceEntry.COL_PLACE_ID, placeId);
+        values.put(PlaceContract.PlaceEntry.COL_NAME, name);
+        values.put(PlaceContract.PlaceEntry.COL_ADDRESS, address);
+        values.put(PlaceContract.PlaceEntry.COL_PLACE_TYPE, placeType);
+
+        mDbHelper.getWritableDatabase().insert(PlaceContract.PlaceEntry.TABLE_NAME, null, values);
+    }
 }

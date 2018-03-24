@@ -12,6 +12,7 @@ public class PlaceContract {
 
     public static class PlaceEntry implements BaseColumns {
         public static final String TABLE_NAME = "saved_place";
+        public static final String COL_PLACE_ID = "place_id";
         public static final String COL_NAME = "name";
         public static final String COL_ADDRESS = "address";
         public static final String COL_PLACE_TYPE = "place_type";
