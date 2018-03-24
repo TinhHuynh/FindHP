@@ -30,4 +30,9 @@ public class OpeningHours {
         this.weekdayText = weekdayText;
     }
 
+    @Override
+    public String toString() {
+        return "open_now=" + openNow +
+                ", weekdayText=" + weekdayText.get(0);
+    }
 }

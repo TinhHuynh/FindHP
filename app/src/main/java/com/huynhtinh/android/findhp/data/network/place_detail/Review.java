@@ -73,4 +73,14 @@ public class Review {
     public void setTime(String time) {
         this.time = time;
     }
+
+    @Override
+    public String toString() {
+        return "author_name=" + authorName
+                + ", language=" + language
+                + ", profile_photo_url=" + profilePhotoUrl
+                + ", rating=" + rating
+                + ", relative_time_description=" + time
+                + ", text=" + text;
+    }
 }
