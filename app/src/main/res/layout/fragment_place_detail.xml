@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,7 +24,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:adjustViewBounds="true"
-                    android:scaleType="centerCrop" />
+                    android:scaleType="centerCrop"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -45,7 +44,7 @@
                         android:textColor="@color/md_white_1000"
                         android:textSize="26dp"
                         android:textStyle="bold"
-                        tools:text="Medical Center name" />
+                        tools:text="Medical Center name"/>
 
                     <TextView
                         android:id="@+id/hp_address_text_view"
@@ -56,7 +55,7 @@
                         android:fontFamily="sans-serif"
                         android:textColor="@color/md_white_1000"
                         android:textSize="20dp"
-                        tools:text="Medical Center Address" />
+                        tools:text="Medical Center Address"/>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -71,7 +70,7 @@
                             android:fontFamily="sans-serif"
                             android:text="Rating"
                             android:textColor="@color/md_white_1000"
-                            android:textSize="18dp" />
+                            android:textSize="18dp"/>
 
                         <RatingBar
                             android:id="@+id/hp_rating_bar"
@@ -82,7 +81,7 @@
                             android:layout_marginTop="5dp"
                             android:numStars="5"
                             android:rating="5"
-                            android:textColor="@color/md_white_1000" />
+                            android:textColor="@color/md_white_1000"/>
 
                         <TextView
                             android:id="@+id/rate_index_text_view"
@@ -92,7 +91,7 @@
                             android:fontFamily="sans-serif"
                             android:textColor="@color/md_white_1000"
                             android:textSize="16sp"
-                            tools:text="(5)" />
+                            tools:text="(5)"/>
 
                     </LinearLayout>
 
@@ -100,39 +99,29 @@
                         android:id="@+id/btnSave"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginTop="10dp"
                         android:background="@color/md_white_1000"
                         android:onClick="saveToFavorite"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginRight="10dp"
-                        android:layout_marginLeft="10dp"
-                        android:textSize="18dp"
                         android:shadowColor="@color/md_green_300"
-                        android:text="Save to Favorite" />
+                        android:text="Save to Favorite"
+                        android:textSize="18dp"/>
 
 
                 </LinearLayout>
 
             </LinearLayout>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/map_fab"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="@dimen/fab_margin"
-                app:layout_anchor="@id/hp_image_view"
-                app:layout_anchorGravity="bottom|end"
-                app:srcCompat="@android:drawable/ic_dialog_map" />
-
-
         </android.support.design.widget.CoordinatorLayout>
 
-        <include layout="@layout/fragment_contact" />
+        <include layout="@layout/fragment_contact"/>
 
-        <include layout="@layout/fragment_image_slider" />
+        <include layout="@layout/fragment_image_slider"/>
 
-        <include layout="@layout/fragment_working_days" />
+        <include layout="@layout/fragment_working_days"/>
 
-        <include layout="@layout/fragment_reviews" />
+        <include layout="@layout/fragment_reviews"/>
 
     </LinearLayout>
 

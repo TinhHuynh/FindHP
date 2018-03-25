@@ -12,9 +12,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.widget.*;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RatingBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import com.huynhtinh.android.findhp.PlaceType;
 import com.huynhtinh.android.findhp.R;
 import com.huynhtinh.android.findhp.data.Photo;
 import com.huynhtinh.android.findhp.data.database.PlaceContract;
@@ -71,6 +74,8 @@ public class PlaceDetailActivity extends AppCompatActivity {
         setContentView(R.layout.fragment_place_detail);
         String placeId = getIntent().getStringExtra(KEY_PLACE_ID);
         fetchPlaceByPlaceId(placeId);
+
+
         mDbHelper = new PlaceDbHelper(getApplicationContext());
 
         hpImageView = findViewById(R.id.hp_image_view);

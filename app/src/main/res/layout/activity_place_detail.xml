@@ -1,9 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.huynhtinh.android.findhp.view.place_detail.PlaceDetailActivity">
 
-</android.support.constraint.ConstraintLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <android.support.design.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/cafe_image_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/background_dark_blur_crop"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimary"
+                    android:orientation="vertical"
+                    android:paddingBottom="20dp"
+                    android:paddingTop="10dp">
+
+                    <TextView
+                        android:id="@+id/cafe_name_text_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="sans-serif"
+                        android:textColor="@color/md_white_1000"
+                        android:textSize="26dp"
+                        android:textStyle="bold"
+                        tools:text="Medical Center name"/>
+
+                    <TextView
+                        android:id="@+id/cafe_address_text_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="20dp"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="sans-serif"
+                        android:textColor="@color/md_white_1000"
+                        android:textSize="20dp"
+                        tools:text="Medical Center Address"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="20dp"
+                        android:layout_marginTop="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="5dp"
+                            android:fontFamily="sans-serif"
+                            android:text="Rating"
+                            android:textColor="@color/md_white_1000"
+                            android:textSize="18dp"/>
+
+                        <RatingBar
+                            android:id="@+id/cafe_rating_bar"
+                            style="?android:attr/ratingBarStyleSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="5dp"
+                            android:layout_marginTop="5dp"
+                            android:numStars="5"
+                            android:rating="5"
+                            android:textColor="@color/md_white_1000"/>
+
+                        <TextView
+                            android:id="@+id/rate_index_text_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="5dp"
+                            android:fontFamily="sans-serif"
+                            android:textColor="@color/md_white_1000"
+                            android:textSize="16sp"
+                            tools:text="(5)"/>
+
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnSave"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@color/md_white_1000"
+                        android:onClick="saveToFav"
+                        android:shadowColor="@color/md_green_300"
+                        android:text="Save to Favorite"
+                        android:textSize="18dp"/>
+
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </android.support.design.widget.CoordinatorLayout>
+
+        <include layout="@layout/fragment_contact"/>
+
+        <include layout="@layout/fragment_image_slider"/>
+
+        <include layout="@layout/fragment_working_days"/>
+
+        <include layout="@layout/fragment_reviews"/>
+
+    </LinearLayout>
+
+</ScrollView>

@@ -1,4 +1,4 @@
-package com.huynhtinh.android.findhp.route;
+package com.huynhtinh.android.findhp.util.route;
 
 /**
  * Async Task to access the Google Direction API and return the routing data

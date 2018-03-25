@@ -78,15 +78,15 @@ import com.huynhtinh.android.findhp.data.network.map.MarkerPlaceHolder;
 import com.huynhtinh.android.findhp.data.network.map.Place;
 import com.huynhtinh.android.findhp.data.network.map.PlacesResponse;
 import com.huynhtinh.android.findhp.data.util.HPLocationUtils;
-import com.huynhtinh.android.findhp.route.AbstractRouting;
-import com.huynhtinh.android.findhp.route.Route;
-import com.huynhtinh.android.findhp.route.RouteException;
-import com.huynhtinh.android.findhp.route.Routing;
-import com.huynhtinh.android.findhp.route.RoutingListener;
 import com.huynhtinh.android.findhp.util.BloodRouteDrawer;
 import com.huynhtinh.android.findhp.util.LatLngLocationConverter;
 import com.huynhtinh.android.findhp.util.LocationUtils;
 import com.huynhtinh.android.findhp.util.ScreenUtils;
+import com.huynhtinh.android.findhp.util.route.AbstractRouting;
+import com.huynhtinh.android.findhp.util.route.Route;
+import com.huynhtinh.android.findhp.util.route.RouteException;
+import com.huynhtinh.android.findhp.util.route.Routing;
+import com.huynhtinh.android.findhp.util.route.RoutingListener;
 import com.huynhtinh.android.findhp.view.place_detail.PlaceDetailActivity;
 import com.huynhtinh.android.findhp.view.saved_list_places.SavedPlaceActivity;
 
@@ -414,7 +414,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         ActionBar actionbar = getSupportActionBar();
         if (actionbar != null) {
             actionbar.setDisplayHomeAsUpEnabled(true);
-            actionbar.setHomeAsUpIndicator(R.drawable.ic_menu);
+            actionbar.setHomeAsUpIndicator(R.drawable.ic_menu_white_real);
         }
     }
 

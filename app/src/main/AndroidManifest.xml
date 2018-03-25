@@ -40,7 +40,7 @@
             android:name=".view.map.MapsActivity"
             android:label="@string/title_activity_maps"
             android:launchMode="singleTop"
-            android:theme="@style/MapTheme">
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 

@@ -9,11 +9,15 @@
     </style>
 
 
-    <style name="MapTheme" parent="AppTheme">
+    <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
 
+
+    <style name="PopupMenuStyle" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:background">@android:color/white</item>
+    </style>
 
     <style name="ToolBarStyle" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="titleTextColor">@android:color/white</item>

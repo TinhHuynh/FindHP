@@ -1,4 +1,4 @@
-package com.huynhtinh.android.findhp.route;
+package com.huynhtinh.android.findhp.util.route;
 //by Haseem Saheed
 
 import android.os.Parcel;
