@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <android.support.design.widget.CoordinatorLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -39,19 +39,19 @@
                         android:id="@+id/cafe_name_text_view"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
+                        android:layout_marginLeft="16dp"
                         android:layout_marginTop="10dp"
                         android:fontFamily="sans-serif"
                         android:textColor="@color/md_white_1000"
                         android:textSize="26dp"
                         android:textStyle="bold"
-                        tools:text="Medical Center name"/>
+                        tools:text="Medical Center name" />
 
                     <TextView
                         android:id="@+id/cafe_address_text_view"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="20dp"
+                        android:layout_marginLeft="16dp"
                         android:layout_marginTop="10dp"
                         android:fontFamily="sans-serif"
                         android:textColor="@color/md_white_1000"
@@ -61,28 +61,28 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="20dp"
+                        android:layout_marginLeft="16dp"
                         android:layout_marginTop="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginRight="5dp"
+                            android:layout_marginRight="16dp"
                             android:fontFamily="sans-serif"
                             android:text="Rating"
                             android:textColor="@color/md_white_1000"
-                            android:textSize="18dp"/>
+                            android:textSize="16dp"/>
 
                         <RatingBar
                             android:id="@+id/cafe_rating_bar"
                             style="?android:attr/ratingBarStyleSmall"
+
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginRight="5dp"
+                            android:layout_marginRight="7dp"
                             android:layout_marginTop="5dp"
-                            android:numStars="5"
                             android:rating="5"
-                            android:textColor="@color/md_white_1000"/>
+                            />
 
                         <TextView
                             android:id="@+id/rate_index_text_view"
@@ -114,7 +114,7 @@
 
             </LinearLayout>
 
-        </android.support.design.widget.CoordinatorLayout>
+        </LinearLayout>
 
         <include layout="@layout/fragment_contact"/>
 
