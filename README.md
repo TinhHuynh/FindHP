@@ -2,12 +2,12 @@
 # FindHP
 
 **Screen shots**
-[Imgur](https://i.imgur.com/00AlTcA.png)
-[Imgur](https://i.imgur.com/BEF0e6I.png)
-[Imgur](https://i.imgur.com/E8PO7tQ.png)
-[Imgur](https://i.imgur.com/vzKX3bT.png)
-[Imgur](https://i.imgur.com/lU5NVGJ.png)
-[Imgur](https://i.imgur.com/lH4IWH7.png)
+![alt text](https://i.imgur.com/00AlTcA.png)
+![alt text](https://i.imgur.com/BEF0e6I.png)
+![alt text](https://i.imgur.com/E8PO7tQ.png)
+![alt text](https://i.imgur.com/vzKX3bT.png)
+![alt text](https://i.imgur.com/lU5NVGJ.png)
+![alt text](https://i.imgur.com/lH4IWH7.png)
 
 ## 1.Giới thiệu
 ### 1.1.Mô tả:
