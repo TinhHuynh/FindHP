@@ -1,6 +1,14 @@
 
 # FindHP
 
+**Screen shots**
+
+![alt text](https://i.imgur.com/00AlTcA.png) ![alt text](https://i.imgur.com/NTHn9wm.png)
+
+![alt text](https://i.imgur.com/BEF0e6I.png) ![alt text](https://i.imgur.com/vzKX3bT.png)
+
+![alt text](https://i.imgur.com/lU5NVGJ.png) ![alt text](https://i.imgur.com/lH4IWH7.png)
+
 ## 1.Giới thiệu
 ### 1.1.Mô tả:
 
@@ -65,6 +73,6 @@ App còn sử dụng các source code từ các dự án mã nguồn mở trên 
 - Mở Google map trên thiết bị của user để dẫn đường tốt hơn.
 - Lưu địa điểm mong muốn vào danh sách &#39;Favorite&#39;.
 
-## 3.Demo
+
 
 
